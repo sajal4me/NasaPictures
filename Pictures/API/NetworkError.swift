@@ -12,7 +12,8 @@ internal enum NetworkError: Error, Equatable {
     case pageNotFound
     case underMaintenance
     case invalidURL
-    case custom(Error)
+    case decodableFail
+    case custom(String)
    
     internal var message: String {
         switch self {
@@ -24,6 +25,8 @@ internal enum NetworkError: Error, Equatable {
             return "Please try again !."
         case .invalidURL:
             return "We are not able to create the url, seems you have put wring parameter"
+        case .decodableFail:
+            return ""
         case .custom:
             return "Error"
         }
