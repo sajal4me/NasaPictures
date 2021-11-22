@@ -7,5 +7,6 @@ target 'Pictures' do
 
   # Pods for Pictures
  pod 'Kingfisher', '~> 7.0'
+ pod 'RealmSwift', '~>10'
 
 end
