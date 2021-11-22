@@ -8,7 +8,7 @@
 import Foundation
 
 internal enum NasaTarget {
-    
+    case aopd(startDate: String, endDate: String)
 }
 
 extension NasaTarget: Endpoint {
@@ -25,14 +25,32 @@ extension NasaTarget: Endpoint {
     }
     
     var path: String {
-        return "/planetary/apod"
+        switch self {
+        case .aopd:
+            return "/planetary/apod"
+        }
+        
     }
     
     var parameters: [URLQueryItem] {
-        return []
+        let param: [String: String]
+        switch self {
+        case let .aopd(startDate, endDate):
+            param = [
+                "api_key": "via0baxs40qdl0PgFX2woO3leb3aOkBYBoTMXsEx",
+                "start_date": startDate,
+                "end_date": endDate
+            ]
+        }
+        return param.map {
+            URLQueryItem(name: $0.0, value: $0.1)
+        }
     }
     
     var method: String {
-        return Method.get.rawValue
+        switch self {
+        case .aopd:
+            return Method.get.rawValue
+        }
     }
 }
