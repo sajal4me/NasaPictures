@@ -9,7 +9,7 @@ import Foundation
 
 internal final class ImageViewModel {
     
-    private let usecase: NasaUsecaseProtocol
+    private let usecase: UsecaseProtocol
     private var imageModel: [ImageModel] = []
     private var startDate: Date = Date()
     private var endDate: Date = Date()
@@ -33,7 +33,7 @@ internal final class ImageViewModel {
 }
 
 
-extension ImageViewModel: PictureDelegate {
+extension ImageViewModel: UsecaseDelegate {
     internal func didLoad(result: Result<[ImageModel], NetworkError>) {
         switch result {
             
