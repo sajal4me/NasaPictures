@@ -94,8 +94,9 @@ internal final class ImageViewController: UIViewController {
         newSnapshot.appendSections([.main])
         newSnapshot.appendItems(viewModel.model)
         
-        
-        dataSource.apply(newSnapshot, animatingDifferences: animatingDifferences)
+        dataSource.apply(newSnapshot, animatingDifferences: animatingDifferences) { [weak self] in
+            self?.setupEmptyDataState(isEmpty: newSnapshot.numberOfItems == 0 )
+        }
     }
     
     // bind data to UI
@@ -104,6 +105,19 @@ internal final class ImageViewController: UIViewController {
             print("viewModel.model.count \(self!.viewModel.model.count)")
             self?.applySnapshot()
         }
+    }
+   
+    private func setupEmptyDataState(isEmpty: Bool) {
+       // if isEmpty true then set the empty label otherwise reset collectionView.backgroundView to nil
+        guard isEmpty else {
+            collectionView.backgroundView = nil
+            return
+        }
+        let label = UILabel(frame: CGRect(x: 12, y: 12, width: 100, height: 100))
+        label.textAlignment = .center
+        label.numberOfLines = 0
+        label.text = "No Data Available please select any other dates"
+        collectionView.backgroundView = label
     }
 }
 
