@@ -22,6 +22,10 @@ internal final class PictureCell: UICollectionViewCell {
         }
     }
     
+    internal static var cellIdentifier: String {
+        String(describing: self)
+    }
+    
     internal var model: ImageModel? {
         didSet {
             imageView.kf.indicatorType = .activity
