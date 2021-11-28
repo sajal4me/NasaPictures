@@ -29,7 +29,6 @@ extension NasaTarget: Endpoint {
         case .aopd:
             return "/planetary/apod"
         }
-        
     }
     
     var parameters: [URLQueryItem] {
@@ -37,7 +36,7 @@ extension NasaTarget: Endpoint {
         switch self {
         case let .aopd(startDate, endDate):
             param = [
-                "api_key": "via0baxs40qdl0PgFX2woO3leb3aOkBYBoTMXsEx",
+                "api_key": "via0baxs40qdl0PgFX2woO3leb3aOkBYBoTMXsEx", // I am aware of that any key shoud not be place inside the code base, it's just for this task I am hardcode here.
                 "start_date": startDate,
                 "end_date": endDate
             ]
