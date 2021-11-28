@@ -14,17 +14,31 @@ internal final class ImageViewController: UIViewController {
     @IBOutlet private weak var collectionView: UICollectionView!
     @IBOutlet private weak var startDateTextField: UITextField! {
         didSet {
-            startDateTextField.text = viewModel.getFormattedStartDate
+        viewModel.getFormattedStartDate(formattedStartDate: { [startDateTextField] date in
+                startDateTextField?.text = date
+            })
             startDateTextField.delegate = self
         }
     }
     @IBOutlet private weak var endDateTextField: UITextField! {
         didSet {
-            endDateTextField.text = viewModel.getFormattedEndtDate
+              viewModel.getFormattedEndtDate(formattedEndDate: { [endDateTextField] date in
+                      endDateTextField?.text = date
+            })
             endDateTextField.delegate = self
         }
     }
     
+    @IBOutlet weak var loader: UIActivityIndicatorView! {
+        didSet {
+            loader.hidesWhenStopped = true
+            loader.startAnimating()
+        }
+    }
+    @IBAction func favouriteBarBtnTapped(_ sender: UIBarButtonItem) {
+        guard let viewController = self.storyboard?.instantiateViewController(withIdentifier: "FavouriteListViewController") as? FavouriteListViewController else { return }
+        navigationController?.pushViewController(viewController, animated: true)
+    }
     // MARK: Private Properties
     
     private let viewModel: ImageViewModel
@@ -36,6 +50,10 @@ internal final class ImageViewController: UIViewController {
                 withReuseIdentifier: PictureCell.cellIdentifier,
                 for: indexPath) as? PictureCell
             cell?.model = imageModel
+            
+            cell?.favouriteButtonTapped = { [weak self] isSelectedFavourite in
+                self?.viewModel.update(favourite: imageModel, isSelected: isSelectedFavourite)
+            }
             return cell
         }
     )
@@ -56,14 +74,12 @@ internal final class ImageViewController: UIViewController {
     
     override internal func viewDidLoad() {
         super.viewDidLoad()
-       
         registertCell()
         configureLayout()
-        applySnapshot(animatingDifferences: false)
-        
         bindUI()
     }
     
+   
     // MARK: - private methods
     
     private func registertCell() {
@@ -78,8 +94,10 @@ internal final class ImageViewController: UIViewController {
           widthDimension: .fractionalWidth(1),
           heightDimension: .estimated(300)
         )
-        let itemCount = isPhone ? 2 : 6
+        let itemCount = isPhone ? 2 : 3
         let item = NSCollectionLayoutItem(layoutSize: size)
+          item.edgeSpacing = NSCollectionLayoutEdgeSpacing(leading: nil, top: .fixed(4), trailing: .fixed(10), bottom: .fixed(4))
+
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: size, subitem: item, count: itemCount)
         let section = NSCollectionLayoutSection(group: group)
         section.contentInsets = NSDirectionalEdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10)
@@ -89,21 +107,36 @@ internal final class ImageViewController: UIViewController {
     }
     
     // Apply snapshot changes to data source
-    private func applySnapshot(animatingDifferences: Bool = true) {
-        var newSnapshot = NSDiffableDataSourceSnapshot<Section, ImageModel>()
-        newSnapshot.appendSections([.main])
-        newSnapshot.appendItems(viewModel.model)
+    private func applySnapshot() {
         
-        dataSource.apply(newSnapshot, animatingDifferences: animatingDifferences) { [weak self] in
-            self?.setupEmptyDataState(isEmpty: newSnapshot.numberOfItems == 0 )
+        viewModel.getImage { [weak self] models in
+            var newSnapshot = NSDiffableDataSourceSnapshot<Section, ImageModel>()
+        
+            newSnapshot.appendSections([.main])
+            newSnapshot.appendItems(models)
+            self?.dataSource.apply(newSnapshot, animatingDifferences: true) { [weak self] in
+                self?.setupEmptyDataState(isEmpty: newSnapshot.numberOfItems == 0 )
+            }
         }
+
     }
     
     // bind data to UI
     private func bindUI() {
         viewModel.didUpdateModel =  { [weak self] in
-            print("viewModel.model.count \(self!.viewModel.model.count)")
-            self?.applySnapshot()
+            guard let self = self else { return }
+            self.applySnapshot()
+            self.loader.stopAnimating()
+        }
+        
+        viewModel.didGetError =  { [weak self] error in
+            guard let self = self else { return }
+            self.loader.stopAnimating()
+            self.showAlert(message: error.errorDescription, cancelTrigger: { [weak self] in
+                self?.dismiss(animated: true)
+            }, reloadTrigger: { [weak self] in
+                self?.viewModel.fetchPictures()
+            })
         }
     }
    
@@ -129,11 +162,21 @@ extension ImageViewController: UITextFieldDelegate {
         
         guard let minimumDate = Calendar.current.date(byAdding: .year, value: -100, to: Date()) else { return false }
         let isStartDateTextFieldSelected = textField === self.startDateTextField
-        let selectedDate = isStartDateTextFieldSelected ? viewModel.getStartDate : viewModel.getEndDate
+        var selectedDate = Date()
+        if isStartDateTextFieldSelected {
+            viewModel.getStartDate { date in
+                selectedDate = date
+            }
+        } else {
+            viewModel.getEndDate { date in
+                selectedDate = date
+            }
+        }
+       
         
         DatePicker.openDatePickerIn(textField, outPutFormat: viewModel.getDateFormat, mode: .date, minimumDate: minimumDate, selectedDate: selectedDate) { [weak self] dateInString, date in
             guard let self = self else { return }
-
+            self.loader.startAnimating()
             textField.text = dateInString
             if isStartDateTextFieldSelected && selectedDate != date {
                 self.viewModel.updateStartDate(date)
@@ -143,5 +186,20 @@ extension ImageViewController: UITextFieldDelegate {
         }
         
         return true
+    }
+    
+    
+    func showAlert(title: String? = "Error", message: String? = nil, cancelTrigger: @escaping () -> Void, reloadTrigger: @escaping () -> Void) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { _ in
+            cancelTrigger()
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Reload", style: .default, handler: { _ in
+            reloadTrigger()
+        }))
+        
+        self.present(alert, animated: true, completion: nil)
     }
 }

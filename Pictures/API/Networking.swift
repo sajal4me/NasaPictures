@@ -30,7 +30,9 @@ internal final class Networking {
         let dataTask = session.dataTask(with: urlRequest) { data, response, error in
             
             if let unwrappedError = error {
-                onCompletion(.failure(.custom(unwrappedError.localizedDescription)))
+                DispatchQueue.main.async {
+                    onCompletion(.failure(.custom(unwrappedError.localizedDescription)))
+                }
                 return
             }
             

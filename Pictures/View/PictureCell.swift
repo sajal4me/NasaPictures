@@ -26,19 +26,32 @@ internal final class PictureCell: UICollectionViewCell {
         String(describing: self)
     }
     
+    internal var favouriteButtonTapped: ((_ isSelectedFavourite: Bool)-> Void)?
+    
     internal var model: ImageModel? {
         didSet {
+            // show idicator in center while loading image from url
             imageView.kf.indicatorType = .activity
-            imageView.kf.setImage(with: model?.url, placeholder: UIImage(named: "placeholder"))
+            imageView.kf.setImage(with: URL(string: model?.url ?? ""), placeholder: UIImage(named: "placeholder"))
             titleLabel.text = model?.title
             dateLabel.text = model?.date
             explanationLabel.text = model?.explanation
+            favouriteButton.isSelected = model?.isFavourite ?? false
         }
     }
 
     override internal func layoutSubviews() {
         super.layoutSubviews()
         imageView.layer.cornerRadius = 8
+    }
+    
+    @IBAction func favouriteButtonTap(_ sender: UIButton) {
+        sender.isSelected.toggle()
+        self.favouriteButtonTapped?(sender.isSelected)
+    }
+    
+    internal func disableFavouriteButton() {
+        favouriteButton.isHidden = true
     }
 }
 
