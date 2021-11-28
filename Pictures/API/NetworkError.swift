@@ -26,9 +26,9 @@ internal enum NetworkError: Error, Equatable {
         case .invalidURL:
             return "We are not able to create the url, seems you have put wring parameter"
         case .decodableFail:
-            return ""
-        case .custom:
-            return "Error"
+            return "Decoading fail any non optional key is missing in response"
+        case let .custom(errorMessage):
+            return errorMessage
         }
     }
 }
