@@ -57,10 +57,12 @@ extension ImageViewModel: UsecaseDelegate {
             
             imageModelDBManager.saveAll(model) { [weak self] isSaved in
                 guard let self = self else { return }
-                    self.didUpdateModel?()
+                self.didUpdateModel?()
             }
         case let .failure(error):
             didGetError?(error)
+            // trigger this closer so that datasurce can fetch the images from data base
+            didUpdateModel?()
         }
     }
     
