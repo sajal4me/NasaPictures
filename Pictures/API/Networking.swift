@@ -7,7 +7,11 @@
 
 import Foundation
 
-internal final class Networking {
+protocol NetworkingProtocol {
+    func request<T: Decodable>(endpoint: Endpoint, decoder: JSONDecoder, onCompletion: @escaping (Result<T, NetworkError>) -> Void )
+}
+
+internal final class Networking: NetworkingProtocol {
     
     internal func request<T: Decodable>(endpoint: Endpoint, decoder: JSONDecoder = JSONDecoder(), onCompletion: @escaping (Result<T, NetworkError>) -> Void )  {
         
